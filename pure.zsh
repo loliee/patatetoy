@@ -124,14 +124,12 @@ prompt_pure_preprompt_render() {
 	local git_color=242
 	[[ -n ${prompt_pure_git_last_dirty_check_timestamp+x} ]] && git_color=red
 
-	# construct preprompt, beginning with path
-	local preprompt="%F{blue}%~%f"
+	# construct preprompt, beginning with path # username and machine if applicable
+	local preprompt="$prompt_pure_username%F{blue}%~%f"
+
 	# git info
-	preprompt+="%F{$git_color}${vcs_info_msg_0_}${prompt_pure_git_dirty}%f"
-	# git pull/push arrows
+	preprompt+="%F{$git_color}${vcs_info_msg_0_}${prompt_pure_git_dirty}${prompt_pure_git_stash}%f"
 	preprompt+="%F{cyan}${prompt_pure_git_arrows}%f"
-	# username and machine if applicable
-	preprompt+=$prompt_pure_username
 	# execution time
 	preprompt+="%F{yellow}${prompt_pure_cmd_exec_time}%f"
 
@@ -228,7 +226,8 @@ prompt_pure_async_git_dirty() {
 		test -z "$(command git status --porcelain --ignore-submodules -unormal)"
 	fi
 
-	(( $? )) && echo "*"
+	(( $? )) && echo "\u2605"
+
 }
 
 prompt_pure_async_git_fetch() {
@@ -237,6 +236,20 @@ prompt_pure_async_git_fetch() {
 
 	# set GIT_TERMINAL_PROMPT=0 to disable auth prompting for git fetch (git 2.3+)
 	GIT_TERMINAL_PROMPT=0 command git -c gc.auto=0 fetch
+}
+
+prompt_pure_async_git_stash() {
+	local stash_check=$1; shift
+
+	# use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
+	cd -q "$*"
+
+	if [[ "$stash_check" == "1" && -f "$(command git rev-parse --show-toplevel)/.git/refs/stash" ]]; then
+		stashed="$(git stash list 2> /dev/null | wc -l | awk '{print $1}')"
+		if (( $stashed > 0 )); then
+			echo " %F{${MLPURE_GIT_STASH_COLOR:-red}}\u25B2%f"
+		fi
+	fi
 }
 
 prompt_pure_async_tasks() {
@@ -257,6 +270,7 @@ prompt_pure_async_tasks() {
 
 		# reset git preprompt variables, switching working tree
 		unset prompt_pure_git_dirty
+		unset prompt_pure_git_stash
 		unset prompt_pure_git_last_dirty_check_timestamp
 
 		# set the new working tree and prefix with "x" to prevent the creation of a named path by AUTO_NAME_DIRS
@@ -279,6 +293,14 @@ prompt_pure_async_tasks() {
 		# check check if there is anything to pull
 		async_job "prompt_pure" prompt_pure_async_git_dirty "${PURE_GIT_UNTRACKED_DIRTY:-1}" "${working_tree}"
 	fi
+
+	# check for stash
+	local time_since_last_stash_check=$(( $EPOCHSECONDS - ${prompt_pure_git_last_stash_check_timestamp:-0} ))
+	if (( $time_since_last_stash_check > 1800 )); then
+		unset prompt_pure_git_last_stash_check_timestamp
+		# check if there is anything any stash
+		async_job "prompt_pure" prompt_pure_async_git_stash "${MLPURE_GIT_STASH_CHECK:-1}" "$working_tree"
+	fi
 }
 
 prompt_pure_async_callback() {
@@ -296,6 +318,12 @@ prompt_pure_async_callback() {
 			# variable. Thus, only upon next rendering of the preprompt will the result appear in a different color.
 			(( $exec_time > 2 )) && prompt_pure_git_last_dirty_check_timestamp=$EPOCHSECONDS
 			;;
+		prompt_pure_async_git_stash)
+			prompt_pure_git_stash=$output
+			prompt_pure_preprompt_render
+
+			(( $exec_time > 2 )) && prompt_pure_git_last_stash_check_timestamp=$EPOCHSECONDS
+			;;
 		prompt_pure_async_git_fetch)
 			prompt_pure_check_git_arrows
 			prompt_pure_preprompt_render
@@ -303,7 +331,7 @@ prompt_pure_async_callback() {
 	esac
 }
 
-prompt_pure_setup() {
+prompt_mlpure_setup() {
 	# prevent percentage showing up
 	# if output doesn't end with a newline
 	export PROMPT_EOL_MARK=''
@@ -336,13 +364,17 @@ prompt_pure_setup() {
 	fi
 
 	# show username@host if logged in through SSH
-	[[ "$SSH_CONNECTION" != '' ]] && prompt_pure_username=' %F{242}%n@%m%f'
-
-	# show username@host if root, with username in white
-	[[ $UID -eq 0 ]] && prompt_pure_username=' %F{white}%n%f%F{242}@%m%f'
+	if [[ "$SSH_CONNECTION" != '' ]] || [[ ${MLPURE_FORCE_DISPLAY_USERNAME:-0} == 1 ]]; then
+		prompt_pure_username='%F{${MLPURE_USERNAME_COLOR:-white}}%n%F{${MLPURE_USERNAME_COLOR:-white}}@%m '
+	fi
+	# show red star if root
+	if [[ $UID -eq 0 ]]; then
+		prompt_pure_username+="%F{red}\u2726 "
+	fi
 
 	# prompt turns red if the previous command didn't exit with 0
-	PROMPT="%(?.%F{magenta}.%F{red})${PURE_PROMPT_SYMBOL:-❯}%f "
+	PROMPT='%(?.%F{${MLPURE_CURSOR_COLOR_OK:-yellow}}.%F{${MLPURE_CURSOR_COLOR_KO:-red}})${MLPURE_PROMPT_SYMBOL:-❯}%f '
+
 }
 
-prompt_pure_setup "$@"
+prompt_mlpure_setup "$@"
