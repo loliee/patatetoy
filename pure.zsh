@@ -245,7 +245,7 @@ prompt_pure_async_git_stash() {
 	local stash_check=$1; shift
 
 	# use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
-	cd -q "$*"
+	builtin cd -q "$*"
 
 	if [[ "$stash_check" == "1" && -f "$(command git rev-parse --show-toplevel)/.git/refs/stash" ]]; then
 		stashed="$(git stash list 2> /dev/null | wc -l | awk '{print $1}')"
