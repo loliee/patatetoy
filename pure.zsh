@@ -52,6 +52,15 @@ prompt_pure_check_cmd_exec_time() {
 	}
 }
 
+function zle-line-init zle-keymap-select {
+	if [[ -z $MLPURE_VIM_MODE ]] then;
+		VIM_MODE=''
+	else
+		VIM_MODE="%F{$git_color}${${KEYMAP/vicmd/n }/(main|viins)/i }%f"
+		zle reset-prompt
+	fi
+}
+
 prompt_pure_clear_screen() {
 	# enable output to terminal
 	zle -I
@@ -347,6 +356,14 @@ prompt_mlpure_setup() {
 	autoload -Uz vcs_info
 	autoload -Uz async && async
 
+	# Check if vim mode enable
+	if [[ -z $MLPURE_VIM_MODE ]] then;
+		VIM_MODE=''
+	else
+		zle -N zle-line-init
+		zle -N zle-keymap-select
+  fi
+
 	add-zsh-hook precmd prompt_pure_precmd
 	add-zsh-hook preexec prompt_pure_preexec
 
@@ -376,8 +393,7 @@ prompt_mlpure_setup() {
 	fi
 
 	# prompt turns red if the previous command didn't exit with 0
-	PROMPT='%(?.%F{${MLPURE_CURSOR_COLOR_OK:-yellow}}.%F{${MLPURE_CURSOR_COLOR_KO:-red}})${MLPURE_PROMPT_SYMBOL:-❯}%f '
-
+	PROMPT='${VIM_MODE}%(?.%F{${MLPURE_CURSOR_COLOR_OK:-yellow}}.%F{${MLPURE_CURSOR_COLOR_KO:-red}})${MLPURE_PROMPT_SYMBOL:-❯}%f '
 }
 
 prompt_mlpure_setup "$@"
