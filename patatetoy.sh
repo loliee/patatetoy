@@ -48,14 +48,15 @@ __git_ps1_show_upstream () {
   # Find how many commits we are ahead/behind our upstream
   count="$(git rev-list --count --left-right \
         "$upstream"...HEAD 2>/dev/null)"
+  count="$(echo "$count" | sed -r 's/\s+//')"
   case "$count" in
   "") # no upstream
-    return ;;
-  "0  0") # equal to upstream
-    return ;;
-  "0  "*) # ahead of upstream
+    p="";;
+  "00") # equal to upstream
+    p="" ;;
+  "0"*) # ahead of upstream
     p="$PATATETOY_GIT_UP_ARROW" ;;
-  *"  0") # behind upstream
+  *"0") # behind upstream
     p="$PATATETOY_GIT_DOWN_ARROW" ;;
   *)      # diverged from upstream
     p="$PATATETOY_GIT_DOWN_ARROW$PATATETOY_GIT_UP_ARROW" ;;
