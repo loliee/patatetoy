@@ -11,6 +11,7 @@
 - Add bash version.
 - Add python virtualenv support.
 - Add git rebase/merge steps.
+- Add vi mode support (zsh version only).
 - Add configuration vars for colors and symbols, see [#options] section.
 
 ## Install
@@ -67,7 +68,7 @@ Unset by default, set to `1` to enable vi-mode visual indicator
 
 #### `PATATETOY_GIT_DIRTY_SYMBOL`
 
-If git repository is dirty, default to `★`.
+If git repository is dirty, default to `✗`.
 
 #### `PATATETOY_GIT_ARROW_COLOR`
 
@@ -87,7 +88,7 @@ Set to `0` to disable stash checking.
 
 #### `PATATETOY_GIT_STASH_SYMBOL`
 
-Git stash char, default to`↯`?
+Git stash char, default to `ⵢ`.
 
 #### `PATATETOY_GIT_STASH_COLOR`
 
