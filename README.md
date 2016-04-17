@@ -2,9 +2,16 @@
 
 [![Build Status](https://travis-ci.org/loliee/patatetoy.svg?branch=master)](https://travis-ci.org/loliee/patatetoy)
 
-> Pretty, minimal and fast `Zsh/Bash` prompt.
+> Pretty, minimal and fast `Zsh/Bash` prompt, initialy forked from [pure](https://github.com/sindresorhus/pure).
 
 ![](screenshot.png)
+
+## Why?
+
+- Add bash version.
+- Add python virtualenv support.
+- Add git rebase/merge steps.
+- Add configuration vars for colors and symbols, see [#options] section.
 
 ## Install
 
@@ -96,7 +103,19 @@ Define username/host color.
 
 #### `PATATATETOY_ROOT_SYMBOL`
 
-Define ROOT user warning symbol and color. default to `%F{red}✦`
+Define ROOT user warning symbol and color. default to `✦`.
+
+#### `PATATATETOY_ROOT_SYMBOL`
+
+Define root symbol color. default to `red`.
+
+#### `PATATETOY_GIT_DIRTY_CHECK`
+
+Set to `0` to disable dirty check. Only useful with `bash prompt version` and on extremely huge repos like the WebKit repo.
+
+#### `PATATETOY_GIT_UNTRACKED_DIRTY`
+
+Set to `0` to not include untracked files in dirtiness check. Only really useful on extremely huge repos like the WebKit repo.
 
 #### `PATATETOY_GIT_PULL` **(zsh version only)**
 
@@ -105,10 +124,6 @@ Set `0` to prevent Patatetoy from checking whether the current Git remote has be
 #### `PATATETOY_GIT_DELAY_DIRTY_CHECK` **(zsh version only)**
 
 Time in seconds to delay git dirty checking for large repositories (git status takes > 2 seconds). The check is performed asynchronously, this is to save CPU. Defaults to `1800` seconds.
-
-#### `PATATETOY_GIT_UNTRACKED_DIRTY` **(zsh version only)**
-
-Set to `0` to not include untracked files in dirtiness check. Only really useful on extremely huge repos like the WebKit repo.
 
 #### `PATATETOY_CMD_MAX_EXEC_TIME` **(zsh version only)**
 
