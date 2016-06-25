@@ -106,7 +106,7 @@ Define username/host color.
 
 Define ROOT user warning symbol and color. default to `✦`.
 
-#### `PATATATETOY_ROOT_SYMBOL`
+#### `PATATETOY_ROOT_SYMBOL_COLOR`
 
 Define root symbol color. default to `red`.
 
