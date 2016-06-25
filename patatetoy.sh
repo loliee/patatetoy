@@ -24,6 +24,7 @@ PATATETOY_GIT_ARROW_COLOR=${PATATETOY_GIT_ARROW_COLOR:-$yellow}
 PATATETOY_GIT_BRANCH_COLOR=${PATATETOY_GIT_BRANCH_COLOR:-$black}
 PATATETOY_GIT_STASH_COLOR=${PATATETOY_GIT_STASH_COLOR:-$red}
 PATATETOY_GIT_DIRTY_SYMBOL_COLOR=${PATATETOY_GIT_DIRTY_SYMBOL_COLOR:-$black}
+PATATETOY_GIT_DISABLE=${PATATETOY_GIT_DISABLE:-0}
 
 PROMPT_COMMAND=__prompt_command
 
@@ -49,6 +50,7 @@ function __prompt_command() {
     timer_stop
     patatetoy_cmd_exec_time $elapsed
 
+    # Init prompt sequence
     PS1="\n"
     if [[ "$SSH_CONNECTION" != '' ]] || [[ $PATATETOY_FORCE_DISPLAY_USERNAME == 1 ]]; then
       PS1+="${PATATETOY_USERNAME_COLOR}\u@\h${c} "
@@ -61,10 +63,8 @@ function __prompt_command() {
 
     PS1+="${blue}$(patatetoy_collapse_pwd)${c}"
 
-    # Init prompt sequence
-    patatetoy_vcs_info
-
-    if [[ -n $patatetoy_vcs_working_tree ]]; then
+    if [[ -n $patatetoy_vcs_working_tree ]] && [[ $PATATETOY_GIT_DISABLE != 1 ]]; then
+      patatetoy_vcs_info
       patatetoy_git_branch
       patatetoy_git_upstream
       PS1+="${PATATETOY_GIT_BRANCH_COLOR}$patatetoy_git_branch${c}${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}$(patatetoy_git_dirty)${c}"

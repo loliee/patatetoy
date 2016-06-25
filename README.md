@@ -66,6 +66,10 @@ Define cursor color for failed previous command.
 
 Unset by default, set to `1` to enable vi-mode visual indicator
 
+#### `PATATETOY_GIT_DISABLE` **(bash version only)**
+
+Default to `0`, set to `1` to disable git vcs infos (slow machines).
+
 #### `PATATETOY_GIT_DIRTY_SYMBOL`
 
 If git repository is dirty, default to `✗`.
