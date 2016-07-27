@@ -42,9 +42,9 @@ function __prompt_command() {
 
     # check previous command result
     if [[ $exit_code -ne 0 ]]; then
-        prompt_symbol="${PATATETOY_CURSOR_COLOR_KO}\n$PATATETOY_PROMPT_SYMBOL ${c}"
+        prompt_symbol="\n${PATATETOY_CURSOR_COLOR_KO}${PATATETOY_PROMPT_SYMBOL} ${c}"
     else
-        prompt_symbol="${PATATETOY_CURSOR_COLOR_OK}\n$PATATETOY_PROMPT_SYMBOL ${c}"
+        prompt_symbol="\n${PATATETOY_CURSOR_COLOR_OK}${PATATETOY_PROMPT_SYMBOL} ${c}"
     fi
     # Manage command time execution.
     timer_stop
