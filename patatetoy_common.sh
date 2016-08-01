@@ -51,8 +51,7 @@ patatetoy_git_upstream() {
   local upstream="@{upstream}"
   # Find how many commits we are ahead/behind our upstream
   count="$(git rev-list --count --left-right \
-        "$upstream"...HEAD 2>/dev/null)"
-  count="$(echo "$count" | sed -r 's/\s+//')"
+        "$upstream"...HEAD 2>/dev/null | tr -d '	' | tr -d ' ')"
   case "$count" in
   "") # no upstream
     p="";;
