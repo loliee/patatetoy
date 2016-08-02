@@ -4,7 +4,8 @@
 #
 # Zsh initialy forked from https://github.com/sindresorhus/pure
 
-. "$HOME/.patatetoy/patatetoy_common.sh"
+PATATETOY_INSTALL_DIR=${PATATETOY_INSTALL_DIR:-$HOME}
+. "$PATATETOY_INSTALL_DIR/.patatetoy/patatetoy_common.sh"
 
 PATATETOY_VIM_MODE=${PATATETOY_VIM_MODE:-0}
 PATATETOY_GIT_PULL=${PATATETOY_GIT_PULL:-1}

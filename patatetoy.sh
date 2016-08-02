@@ -2,7 +2,8 @@
 # by Maxime Loliée
 # https://github.com/loliee/patatetoy
 
-. "$HOME/.patatetoy/patatetoy_common.sh"
+PATATETOY_INSTALL_DIR=${PATATETOY_INSTALL_DIR:-$HOME}
+. "$PATATETOY_INSTALL_DIR/.patatetoy/patatetoy_common.sh"
 
 c='\[\e[0m\]'
 black='\[\e[0;90m\]'

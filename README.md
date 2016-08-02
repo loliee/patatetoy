@@ -50,6 +50,10 @@ PATATETOY_GIT_ARROW_COLOR="blue" # Zsh
 PATATETOY_GIT_ARROW_COLOR="$blue" # Bash
 ```
 
+#### `PATATETOY_INSTALL_DIR`
+
+Define custom install directory, default `$HOME`
+
 #### `PATATETOY_PROMPT_SYMBOL`
 
 Character to use as prompt symbol, default `❯`.
