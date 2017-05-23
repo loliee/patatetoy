@@ -82,6 +82,9 @@ prompt_patatetoy_string_length_to_var() {
 }
 
 prompt_patatetoy_preprompt_render() {
+  # make sure prompt_subst is unset to prevent parameter expansion in prompt
+  setopt local_options no_prompt_subst
+
   # check that no command is currently running, the preprompt will otherwise be rendered in the wrong place
   [[ -n ${prompt_patatetoy_cmd_timestamp+x} && "$1" != "precmd" ]] && return
 
