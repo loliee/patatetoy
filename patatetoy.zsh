@@ -339,8 +339,9 @@ prompt_patatetoy_setup() {
   else
     PROMPT=''
   fi
-  PROMPT+='%(?.%F{$PATATETOY_CURSOR_COLOR_OK}.%F{$PATATETOY_CURSOR_COLOR_KO})$PATATETOY_PROMPT_SYMBOL%f '
+
   # prompt turns red if the previous command didn't exit with 0
+  PROMPT+='%(?.%F{$PATATETOY_CURSOR_COLOR_OK}.%F{$PATATETOY_CURSOR_COLOR_KO})$PATATETOY_PROMPT_SYMBOL%f '
 }
 
 prompt_patatetoy_setup "$@"
