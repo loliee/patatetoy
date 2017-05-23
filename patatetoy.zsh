@@ -82,6 +82,9 @@ prompt_patatetoy_string_length_to_var() {
 }
 
 prompt_patatetoy_preprompt_render() {
+  # store the current prompt_subst setting so that it can be restored later
+  local prompt_subst_status=$options[prompt_subst]
+
   # make sure prompt_subst is unset to prevent parameter expansion in prompt
   setopt local_options no_prompt_subst
 
@@ -149,6 +152,11 @@ prompt_patatetoy_preprompt_render() {
 
     # modify previous preprompt
     print -Pn "${clr_prev_preprompt}\e[${lines}A\e[${COLUMNS}D${preprompt}${clr}\n"
+
+    if [[ $prompt_subst_status = 'on' ]]; then
+      # re-eanble prompt_subst for expansion on PS1
+      setopt prompt_subst
+    fi
 
     # redraw prompt (also resets cursor position)
     zle && zle .reset-prompt
@@ -295,6 +303,7 @@ prompt_patatetoy_setup() {
 
   zmodload zsh/datetime
   zmodload zsh/zle
+  zmodload zsh/parameter
   autoload -Uz add-zsh-hook
   autoload -Uz async && async
 
