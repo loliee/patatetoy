@@ -68,7 +68,13 @@ function __prompt_command() {
       patatetoy_vcs_info
       patatetoy_git_branch
       patatetoy_git_upstream
-      PS1+="${PATATETOY_GIT_BRANCH_COLOR}$patatetoy_git_branch${c}${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}$(patatetoy_git_dirty)${c}"
+      patatetoy_git_dirty
+      if (( $? == 0 )); then
+        prompt_patatetoy_git_dirty=""
+      else
+        prompt_patatetoy_git_dirty="$PATATETOY_GIT_DIRTY_SYMBOL"
+      fi
+      PS1+="${PATATETOY_GIT_BRANCH_COLOR}$patatetoy_git_branch${c}${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}${prompt_patatetoy_git_dirty}${c}"
       PS1+="${PATATETOY_GIT_STASH_COLOR}$(patatetoy_git_stash)$c$PATATETOY_GIT_ARROW_COLOR$patatetoy_git_upstream${c}"
     fi
 

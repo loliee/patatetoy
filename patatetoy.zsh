@@ -97,9 +97,9 @@ prompt_patatetoy_preprompt_render() {
   # git info
   patatetoy_git_branch
   preprompt+="%F{$PATATETOY_GIT_BRANCH_COLOR}${patatetoy_git_branch}%f"
-  preprompt+="%F{${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}}${patatetoy_git_dirty}%f"
+  preprompt+="%F{${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}}${prompt_patatetoy_git_dirty}%f"
   preprompt+="%F{$PATATETOY_GIT_STASH_COLOR}${patatetoy_git_stash}%f"
-  preprompt+="%F{$PATATETOY_GIT_ARROW_COLOR}${patatetoy_git_upstream}%f"
+  preprompt+="%F{$PATATETOY_GIT_ARROW_COLOR}${prompt_patatetoy_git_arrows}%f"
   preprompt+="%F{$PATATETOY_VIRTUALENV_COLOR}$(patatetoy_virtualenv_info)%f"
 
   # execution time
@@ -194,31 +194,47 @@ prompt_patatetoy_precmd() {
 }
 
 # fastest possible way to check if repo is dirty
-patatetoy_async_git_dirty() {
-  # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
-  builtin cd -q "$*"
+prompt_patatetoy_async_git_dirty() {
+  setopt localoptions noshwordsplit
+  builtin cd -q $1
+
   patatetoy_git_dirty
 }
 
 patatetoy_async_git_stash() {
   # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
   builtin cd -q "$*"
+
   patatetoy_git_stash
 }
 
 prompt_patatetoy_async_git_fetch() {
+  setopt localoptions noshwordsplit
+
   # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
-  builtin cd -q "$*"
+  builtin cd -q $1
 
   # set GIT_TERMINAL_PROMPT=0 to disable auth prompting for git fetch (git 2.3+)
   export GIT_TERMINAL_PROMPT=0
   # set ssh BachMode to disable all interactive ssh password prompting
   export GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-"ssh -o BatchMode=yes"}
 
-  command git -c gc.auto=0 fetch
+  command git -c gc.auto=0 fetch &>/dev/null || return 1
+
+  # check arrow status after a successful git fetch
+  prompt_patatetoy_async_git_arrows $1
+}
+
+prompt_patatetoy_async_git_arrows() {
+  setopt localoptions noshwordsplit
+  builtin cd -q $1
+
+  patatetoy_git_upstream
 }
 
 prompt_patatetoy_async_tasks() {
+  setopt localoptions noshwordsplit
+
   # initialize async worker
   ((!${prompt_patatetoy_async_init:-0})) && {
     async_start_worker "prompt_patatetoy" -u -n
@@ -236,9 +252,10 @@ prompt_patatetoy_async_tasks() {
 
     # reset git preprompt variables, switching working tree
     unset patatetoy_git_branch
-    unset patatetoy_git_dirty
+    unset prompt_patatetoy_git_dirty
     unset patatetoy_git_stash
     unset prompt_patatetoy_git_last_dirty_check_timestamp
+    prompt_patatetoy_git_arrows=
 
     # set the new working tree and prefix with "x" to prevent the creation of a named path by AUTO_NAME_DIRS
     prompt_patatetoy_current_working_tree="x${working_tree}"
@@ -246,11 +263,12 @@ prompt_patatetoy_async_tasks() {
 
   # only perform tasks inside git working tree
   [[ -n $working_tree ]] || return
+  async_job "prompt_patatetoy" prompt_patatetoy_async_git_arrows $working_tree
 
   # do not preform git fetch if it is disabled or working_tree == HOME
   if (( ${PATATETOY_GIT_PULL:-1} )) && [[ $working_tree != $HOME ]]; then
     # tell worker to do a git fetch
-    async_job "prompt_patatetoy" prompt_patatetoy_async_git_fetch "${working_tree}"
+    async_job "prompt_patatetoy" prompt_patatetoy_async_git_fetch $working_tree
   fi
 
   # if dirty checking is sufficiently fast, tell worker to check it again, or wait for timeout
@@ -258,7 +276,7 @@ prompt_patatetoy_async_tasks() {
   if (( time_since_last_dirty_check > $PATATETOY_GIT_DELAY_DIRTY_CHECK)); then
     unset prompt_patatetoy_git_last_dirty_check_timestamp
     # check check if there is anything to pull
-    async_job "prompt_patatetoy" patatetoy_async_git_dirty "${working_tree}"
+    async_job "prompt_patatetoy" prompt_patatetoy_async_git_dirty $working_tree
   fi
 
   # check for stash
@@ -271,14 +289,19 @@ prompt_patatetoy_async_tasks() {
 }
 
 prompt_patatetoy_async_callback() {
-  local job=$1
-  local output=$3
-  local exec_time=$4
+  setopt localoptions noshwordsplit
+  local job=$1 code=$2 output=$3 exec_time=$4
 
-  case "${job}" in
-    patatetoy_async_git_dirty)
-      patatetoy_git_dirty=$output
-      prompt_patatetoy_preprompt_render
+  case $job in
+    prompt_patatetoy_async_git_dirty)
+      local prev_dirty=$prompt_patatetoy_git_dirty
+      if (( code == 0 )); then
+        prompt_patatetoy_git_dirty=""
+      else
+        prompt_patatetoy_git_dirty="$PATATETOY_GIT_DIRTY_SYMBOL"
+      fi
+
+      [[ $prev_dirty != $prompt_patatetoy_git_dirty ]] && prompt_patatetoy_preprompt_render
 
       # When prompt_patatetoy_git_last_dirty_check_timestamp is set, the git info is displayed in a different color.
       # To distinguish between a "fresh" and a "cached" result, the preprompt is rendered before setting this
@@ -291,9 +314,13 @@ prompt_patatetoy_async_callback() {
 
       (( $exec_time > 2 )) && prompt_patatetoy_git_last_stash_check_timestamp=$EPOCHSECONDS
       ;;
-    prompt_patatetoy_async_git_fetch)
-      patatetoy_git_upstream
-      prompt_patatetoy_preprompt_render
+    prompt_patatetoy_async_git_fetch|prompt_patatetoy_async_git_arrows)
+      # prompt_patatetoy_async_git_fetch executes prompt_patatetoy_async_git_arrows
+      # after a successful fetch.
+      prompt_patatetoy_git_arrows=$patatetoy_git_upstream
+      if (( code == 0 )); then
+          prompt_patatetoy_preprompt_render
+      fi
       ;;
   esac
 }
