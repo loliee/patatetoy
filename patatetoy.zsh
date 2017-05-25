@@ -332,6 +332,11 @@ prompt_patatetoy_setup() {
 
   prompt_opts=(subst percent)
 
+  # borrowed from promptinit, sets the prompt options in case pure was not
+  # promptinit and we need to take care of setting the options ourselves
+  # initialized via promptinit.
+  setopt noprompt{bang,cr,percent,subst} "prompt${^prompt_opts[@]}"
+
   zmodload zsh/datetime
   zmodload zsh/zle
   zmodload zsh/parameter
