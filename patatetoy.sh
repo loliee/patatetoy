@@ -64,7 +64,7 @@ function __prompt_command() {
 
     PS1+="${blue}$(patatetoy_collapse_pwd)${c}"
 
-    if [[ -n $patatetoy_vcs_working_tree ]] && [[ $PATATETOY_GIT_DISABLE != 1 ]]; then
+    if ([ -d .git ] || git rev-parse --git-dir > /dev/null 2>&1) && [[ $PATATETOY_GIT_DISABLE != 1 ]]; then
       patatetoy_vcs_info
       patatetoy_git_branch
       patatetoy_git_upstream
