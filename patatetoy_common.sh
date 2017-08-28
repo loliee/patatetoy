@@ -64,7 +64,7 @@ patatetoy_git_upstream() {
   *)      # diverged from upstream
     p=" $PATATETOY_GIT_DOWN_ARROW$PATATETOY_GIT_UP_ARROW" ;;
   esac
- patatetoy_git_upstream="$p"
+  patatetoy_git_upstream="$p"
 }
 
 patatetoy_git_branch() {
@@ -159,17 +159,12 @@ patatetoy_git_stash() {
 
 # fastest possible way to check if repo is dirty
 patatetoy_git_dirty() {
-  if [[ "$PATATETOY_GIT_DIRTY_CHECK" == "0" ]]; then
-    return
-  fi
-
   if [[ "$PATATETOY_GIT_UNTRACKED_DIRTY" == "0" ]]; then
     command git diff --no-ext-diff --quiet --exit-code
   else
     test -z "$(command git status --porcelain --ignore-submodules -unormal)"
   fi
-
-  (( $? )) && echo "$PATATETOY_GIT_DIRTY_SYMBOL"
+  return $?
 }
 
 function patatetoy_virtualenv_info {

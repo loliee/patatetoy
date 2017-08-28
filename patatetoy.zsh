@@ -82,6 +82,12 @@ prompt_patatetoy_string_length_to_var() {
 }
 
 prompt_patatetoy_preprompt_render() {
+  # store the current prompt_subst setting so that it can be restored later
+  local prompt_subst_status=$options[prompt_subst]
+
+  # make sure prompt_subst is unset to prevent parameter expansion in prompt
+  setopt local_options no_prompt_subst
+
   # check that no command is currently running, the preprompt will otherwise be rendered in the wrong place
   [[ -n ${prompt_patatetoy_cmd_timestamp+x} && "$1" != "precmd" ]] && return
 
@@ -91,20 +97,23 @@ prompt_patatetoy_preprompt_render() {
   # git info
   patatetoy_git_branch
   preprompt+="%F{$PATATETOY_GIT_BRANCH_COLOR}${patatetoy_git_branch}%f"
-  preprompt+="%F{${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}}${patatetoy_git_dirty}%f"
+  preprompt+="%F{${PATATETOY_GIT_DIRTY_SYMBOL_COLOR}}${prompt_patatetoy_git_dirty}%f"
   preprompt+="%F{$PATATETOY_GIT_STASH_COLOR}${patatetoy_git_stash}%f"
-  preprompt+="%F{$PATATETOY_GIT_ARROW_COLOR}${patatetoy_git_upstream}%f"
+  preprompt+="%F{$PATATETOY_GIT_ARROW_COLOR}${prompt_patatetoy_git_arrows}%f"
   preprompt+="%F{$PATATETOY_VIRTUALENV_COLOR}$(patatetoy_virtualenv_info)%f"
 
   # execution time
   preprompt+="%F{yellow}$prompt_patatetoy_cmd_exec_time%f"
 
+  # make sure prompt_patatetoy_last_preprompt is a global array
+  typeset -g -a prompt_patatetoy_last_preprompt
+
   # if executing through precmd, do not perform fancy terminal editing
   if [[ "$1" == "precmd" ]]; then
     print -P "\n${preprompt}"
   else
-    # only redraw if preprompt has changed
-    [[ "${prompt_patatetoy_last_preprompt}" != "${preprompt}" ]] || return
+    # only redraw if the expanded preprompt has changed
+    [[ "${prompt_patatetoy_last_preprompt[2]}" != "${(S%%)preprompt}" ]] || return
 
     # calculate length of preprompt and store it locally in preprompt_length
     integer preprompt_length lines
@@ -115,7 +124,7 @@ prompt_patatetoy_preprompt_render() {
 
     # calculate previous preprompt lines to figure out how the new preprompt should behave
     integer last_preprompt_length last_lines
-    prompt_patatetoy_string_length_to_var "${prompt_patatetoy_last_preprompt}" "last_preprompt_length"
+    prompt_patatetoy_string_length_to_var "${prompt_patatetoy_last_preprompt[1]}" "last_preprompt_length"
     (( last_lines = ( last_preprompt_length - 1 ) / COLUMNS + 1 ))
 
     # clr_prev_preprompt erases visual artifacts from previous preprompt
@@ -144,12 +153,19 @@ prompt_patatetoy_preprompt_render() {
     # modify previous preprompt
     print -Pn "${clr_prev_preprompt}\e[${lines}A\e[${COLUMNS}D${preprompt}${clr}\n"
 
+    if [[ $prompt_subst_status = 'on' ]]; then
+      # re-eanble prompt_subst for expansion on PS1
+      setopt prompt_subst
+    fi
+
     # redraw prompt (also resets cursor position)
     zle && zle .reset-prompt
+
+    setopt no_prompt_subst
   fi
 
-  # store previous preprompt for comparison
-  prompt_patatetoy_last_preprompt=$preprompt
+  # store both unexpanded and expanded preprompt for comparison
+  prompt_patatetoy_last_preprompt=("$preprompt" "${(S%%)preprompt}")
 }
 
 prompt_patatetoy_precmd() {
@@ -180,27 +196,47 @@ prompt_patatetoy_precmd() {
 }
 
 # fastest possible way to check if repo is dirty
-patatetoy_async_git_dirty() {
-  # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
-  builtin cd -q "$*"
+prompt_patatetoy_async_git_dirty() {
+  setopt localoptions noshwordsplit
+  builtin cd -q $1
+
   patatetoy_git_dirty
 }
 
 patatetoy_async_git_stash() {
   # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
   builtin cd -q "$*"
+
   patatetoy_git_stash
 }
 
 prompt_patatetoy_async_git_fetch() {
+  setopt localoptions noshwordsplit
+
   # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
-  builtin cd -q "$*"
+  builtin cd -q $1
 
   # set GIT_TERMINAL_PROMPT=0 to disable auth prompting for git fetch (git 2.3+)
-  GIT_TERMINAL_PROMPT=0 command git -c gc.auto=0 fetch
+  export GIT_TERMINAL_PROMPT=0
+  # set ssh BachMode to disable all interactive ssh password prompting
+  export GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-"ssh -o BatchMode=yes"}
+
+  command git -c gc.auto=0 fetch &>/dev/null || return 1
+
+  # check arrow status after a successful git fetch
+  prompt_patatetoy_async_git_arrows $1
+}
+
+prompt_patatetoy_async_git_arrows() {
+  setopt localoptions noshwordsplit
+  builtin cd -q $1
+
+  patatetoy_git_upstream
 }
 
 prompt_patatetoy_async_tasks() {
+  setopt localoptions noshwordsplit
+
   # initialize async worker
   ((!${prompt_patatetoy_async_init:-0})) && {
     async_start_worker "prompt_patatetoy" -u -n
@@ -218,9 +254,10 @@ prompt_patatetoy_async_tasks() {
 
     # reset git preprompt variables, switching working tree
     unset patatetoy_git_branch
-    unset patatetoy_git_dirty
+    unset prompt_patatetoy_git_dirty
     unset patatetoy_git_stash
     unset prompt_patatetoy_git_last_dirty_check_timestamp
+    prompt_patatetoy_git_arrows=
 
     # set the new working tree and prefix with "x" to prevent the creation of a named path by AUTO_NAME_DIRS
     prompt_patatetoy_current_working_tree="x${working_tree}"
@@ -228,11 +265,12 @@ prompt_patatetoy_async_tasks() {
 
   # only perform tasks inside git working tree
   [[ -n $working_tree ]] || return
+  async_job "prompt_patatetoy" prompt_patatetoy_async_git_arrows $working_tree
 
   # do not preform git fetch if it is disabled or working_tree == HOME
   if (( ${PATATETOY_GIT_PULL:-1} )) && [[ $working_tree != $HOME ]]; then
     # tell worker to do a git fetch
-    async_job "prompt_patatetoy" prompt_patatetoy_async_git_fetch "${working_tree}"
+    async_job "prompt_patatetoy" prompt_patatetoy_async_git_fetch $working_tree
   fi
 
   # if dirty checking is sufficiently fast, tell worker to check it again, or wait for timeout
@@ -240,7 +278,7 @@ prompt_patatetoy_async_tasks() {
   if (( time_since_last_dirty_check > $PATATETOY_GIT_DELAY_DIRTY_CHECK)); then
     unset prompt_patatetoy_git_last_dirty_check_timestamp
     # check check if there is anything to pull
-    async_job "prompt_patatetoy" patatetoy_async_git_dirty "${working_tree}"
+    async_job "prompt_patatetoy" prompt_patatetoy_async_git_dirty $working_tree
   fi
 
   # check for stash
@@ -253,14 +291,19 @@ prompt_patatetoy_async_tasks() {
 }
 
 prompt_patatetoy_async_callback() {
-  local job=$1
-  local output=$3
-  local exec_time=$4
+  setopt localoptions noshwordsplit
+  local job=$1 code=$2 output=$3 exec_time=$4
 
-  case "${job}" in
-    patatetoy_async_git_dirty)
-      patatetoy_git_dirty=$output
-      prompt_patatetoy_preprompt_render
+  case $job in
+    prompt_patatetoy_async_git_dirty)
+      local prev_dirty=$prompt_patatetoy_git_dirty
+      if (( code == 0 )); then
+        prompt_patatetoy_git_dirty=""
+      else
+        prompt_patatetoy_git_dirty="$PATATETOY_GIT_DIRTY_SYMBOL"
+      fi
+
+      [[ $prev_dirty != $prompt_patatetoy_git_dirty ]] && prompt_patatetoy_preprompt_render
 
       # When prompt_patatetoy_git_last_dirty_check_timestamp is set, the git info is displayed in a different color.
       # To distinguish between a "fresh" and a "cached" result, the preprompt is rendered before setting this
@@ -273,9 +316,13 @@ prompt_patatetoy_async_callback() {
 
       (( $exec_time > 2 )) && prompt_patatetoy_git_last_stash_check_timestamp=$EPOCHSECONDS
       ;;
-    prompt_patatetoy_async_git_fetch)
-      patatetoy_git_upstream
-      prompt_patatetoy_preprompt_render
+    prompt_patatetoy_async_git_fetch|prompt_patatetoy_async_git_arrows)
+      # prompt_patatetoy_async_git_fetch executes prompt_patatetoy_async_git_arrows
+      # after a successful fetch.
+      prompt_patatetoy_git_arrows=$patatetoy_git_upstream
+      if (( code == 0 )); then
+          prompt_patatetoy_preprompt_render
+      fi
       ;;
   esac
 }
@@ -287,8 +334,14 @@ prompt_patatetoy_setup() {
 
   prompt_opts=(subst percent)
 
+  # borrowed from promptinit, sets the prompt options in case pure was not
+  # promptinit and we need to take care of setting the options ourselves
+  # initialized via promptinit.
+  setopt noprompt{bang,cr,percent,subst} "prompt${^prompt_opts[@]}"
+
   zmodload zsh/datetime
   zmodload zsh/zle
+  zmodload zsh/parameter
   autoload -Uz add-zsh-hook
   autoload -Uz async && async
 
@@ -320,8 +373,9 @@ prompt_patatetoy_setup() {
   else
     PROMPT=''
   fi
-  PROMPT+='%(?.%F{$PATATETOY_CURSOR_COLOR_OK}.%F{$PATATETOY_CURSOR_COLOR_KO})$PATATETOY_PROMPT_SYMBOL%f '
+
   # prompt turns red if the previous command didn't exit with 0
+  PROMPT+='%(?.%F{$PATATETOY_CURSOR_COLOR_OK}.%F{$PATATETOY_CURSOR_COLOR_KO})$PATATETOY_PROMPT_SYMBOL%f '
 }
 
 prompt_patatetoy_setup "$@"
