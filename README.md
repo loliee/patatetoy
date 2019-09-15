@@ -1,164 +1,58 @@
+:warning: **Prompt code moved [here](https://github.com/loliee/prompt-patatetoy) !**
+
 # Patatetoy
 
-[![Build Status](https://travis-ci.org/loliee/patatetoy.svg?branch=master)](https://travis-ci.org/loliee/patatetoy)
+Patatetoy is a joyful color scheme for daily use.
 
-> Pretty, minimal and fast `Zsh/Bash` prompt, initialy forked from [pure](https://github.com/sindresorhus/pure).
+## Why ?
 
-![](screenshot.png)
+The goal is to provide a set of **punchy colors** with **non-agressive** tones 🎨
 
-## Why?
+>〝I wrote this color scheme a few years ago to fit my needs and I am still happy to use it everyday.”
 
-- Add bash version.
-- Add python virtualenv support.
-- Add git rebase/merge steps.
-- Add vi mode support (zsh version only).
-- Add configuration vars for colors and symbols, see [#options] section.
+## Colors
+
+![](files/palette.svg)
 
 ## Install
 
-Clone repository.
+See specific application `README` for install details.
 
-```bash
-git clone https://github.com/loliee/patatetoy.git "$HOME/.patatetoy"
-```
+- [vim](https://github.com/loliee/vim-patatetoy)
+- [iTerm2](https://github.com/loliee/iterm2-patatetoy)
+- [Terminal.app](https://github.com/loliee/patatetoy/master/macos-terminal)
+- [Terminator](https://github.com/loliee/patatetoy/master/terminator)
 
-### Zsh
+## The Values
 
-```
-# .zshrc
-fpath=( "$HOME/.patatetoy" $fpath )
+| TERMCOL   | HEX        | RGB         | HSB         |
+| ----------| -----------|:-----------:| ------------|
+| black     | `#6c6d6c`  | 108 109 108 | 106 04  109 |
+| blackbr   | `#292b2d`  | 41  43  45  | 152 24  45  |
+| blue      | `#5eb1dd`  | 94  177 221 | 142 145 221 |
+| bluebr    | `#73b8dc`  | 115 184 220 | 141 121 220 |
+| cyan      | `#7ec6eb`  | 126 198 235 | 142 117 235 |
+| cyanbr    | `#91cce9`  | 145 204 233 | 141 96  233 |
+| green     | `#82c476`  | 130 196 118 | 78  100 196 |
+| greenbr   | `#88d07e`  | 135 208 126 | 79  101 208 |
+| magenta   | `#c4a5c7`  | 196 165 199 | 209 42  199 |
+| magentabr | `#d5b7d4`  | 213 183 212 | 213 35  213 |
+| red       | `#f0522a`  | 240 82  42  | 8   209 240 |
+| redbr     | `#fe6743`  | 254 103 67  | 8   187 254 |
+| white     | `#c9cac0`  | 201 202 192 | 44  12  202 |
+| whitebr   | `#f7f5eb`  | 247 245 235 | 35  12  247 |
+| yellow    | `#fee040`  | 254 224 64  | 35  190 254 |
+| yellowbr  | `#fae959`  | 250 233 89  | 38  164 250 |
 
-autoload -U promptinit && promptinit
-prompt patatetoy
-```
+## Screenshots
 
-### Bash
+### iTerm2
 
-```
-# .bashrc
-source "$HOME/.patatetoy/patatetoy.sh
-```
+![](https://github.com/loliee/iterm2-patatetoy/raw/master/screenshot.png)
 
-## Options
+### Vim
 
-Possible colors are: `black` `red` `green` `yellow` `blue` `magenta` `cyan` `grey` `white`
-
-Color configuration depend of which version you configure, zsh version don't require `$` prefix for setting color.
-
-```bash
-PATATETOY_GIT_ARROW_COLOR="blue" # Zsh
-PATATETOY_GIT_ARROW_COLOR="$blue" # Bash
-```
-
-#### `PATATETOY_INSTALL_DIR`
-
-Define custom install directory, default `$HOME`
-
-#### `PATATETOY_PROMPT_SYMBOL`
-
-Character to use as prompt symbol, default `❯`.
-
-#### `PATATETOY_CURSOR_COLOR_OK`
-
-Define cursor color for sucessed previous command.
-
-#### `PATATETOY_CURSOR_COLOR_KO`
-
-Define cursor color for failed previous command.
-
-#### `PATATETOY_VIM_MODE` **(zsh version only)**
-
-Unset by default, set to `1` to enable vi-mode visual indicator
-
-#### `PATATETOY_GIT_DISABLE` **(bash version only)**
-
-Default to `0`, set to `1` to disable git vcs infos (slow machines).
-
-#### `PATATETOY_GIT_DIRTY_SYMBOL`
-
-If git repository is dirty, default to `✗`.
-
-#### `PATATETOY_GIT_ARROW_COLOR`
-
-Define git upstream arrow's color.
-
-#### `PATATETOY_GIT_UP_ARROW`
-
-Git upstream forward char, default to `⬆`.
-
-#### `PATATETOY_GIT_DOWN_ARROW`
-
-Git upqtream behind char, default to `⬇`.
-
-#### `PATATETOY_GIT_STASH_CHECK`
-
-Set to `0` to disable stash checking.
-
-#### `PATATETOY_GIT_STASH_SYMBOL`
-
-Git stash char, default to `ⵢ`.
-
-#### `PATATETOY_GIT_STASH_COLOR`
-
-Define git stash char's color.
-
-#### `PATATETOY_FORCE_DISPLAY_USERNAME`
-
-Set to `1` to force username and host.
-
-#### `PATATETOY_USERNAME_COLOR`
-
-Define username/host color.
-
-#### `PATATATETOY_ROOT_SYMBOL`
-
-Define ROOT user warning symbol and color. default to `✦`.
-
-#### `PATATETOY_ROOT_SYMBOL_COLOR`
-
-Define root symbol color. default to `red`.
-
-#### `PATATETOY_GIT_DIRTY_CHECK`
-
-Set to `0` to disable dirty check. Only useful with `bash prompt version` and on extremely huge repos like the WebKit repo.
-
-#### `PATATETOY_GIT_UNTRACKED_DIRTY`
-
-Set to `0` to not include untracked files in dirtiness check. Only really useful on extremely huge repos like the WebKit repo.
-
-#### `PATATETOY_GIT_PULL` **(zsh version only)**
-
-Set `0` to prevent Patatetoy from checking whether the current Git remote has been updated.
-
-#### `PATATETOY_GIT_DELAY_DIRTY_CHECK` **(zsh version only)**
-
-Time in seconds to delay git dirty checking for large repositories (git status takes > 2 seconds). The check is performed asynchronously, this is to save CPU. Defaults to `1800` seconds.
-
-#### `PATATETOY_CMD_MAX_EXEC_TIME` **(zsh version only)**
-
-The max execution time of a process before its run time is shown when it exits. Defaults to `5` seconds.
-
-## Example
-
-```sh
-# .zshrc
-
-autoload -U promptinit && promptinit
-
-# optionally define some options
-PATATATETOY_CMD_MAX_EXEC_TIME=10
-PATATATETOY_FORCE_DISPLAY_USERNAME=1
-PATATATETOY_USERNAME_COLOR=red
-PATATATETOY_VIM_MODE=1
-
-prompt patatetoy
-```
-
-## Tips
-
-- [patatetoy-iterm2](https://github.com/loliee/patatetoy-iterm2) colorscheme, for having the real patatetoy.
-- [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting), to colorized output.
-- [sshrc](https://github.com/Russell91/sshrc), to bring the light bash version with you when you ssh.
+![](https://raw.githubusercontent.com/loliee/vim-patatetoy/master/screenshot.png)
 
 ## License
 
@@ -167,4 +61,3 @@ MIT © Maxime Loliée
 ## Author
 
 - [Maxime Loliée](http://github/loliee)
-- [Sindre Sorhus](http://sindresorhus.com)
