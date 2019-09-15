@@ -1,0 +1,17 @@
+[profiles]
+  [[default]]
+  [[patatetoy]]
+    palette = "#3a3a3a:#f1532b:#82c477:#ffe041:#5fb1dd:#c4a6c7:#7fc7ec:#cacac0:#6c6e6d:#fe6744:#88d17e:#faea59:#73b9dc:#d5b8d5:#92cce9:#f8f6ec"
+    foreground_color = "#cacac0"
+    background_color = "#292b2e"
+    cursor_color = "#c8c7c6"
+[layouts]
+  [[default]]
+    [[[child1]]]
+      type = Terminal
+      parent = window0
+      profile = patatetoy
+    [[[window0]]]
+      type = Window
+      parent = ""
+[plugins]
